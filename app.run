@@ -1,0 +1,21 @@
+from flask import Flask, request
+app = Flask(__name__)
+rooms = {}
+@app.route('/')
+def home():
+    return '''<html dir=rtl><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#111b21;color:#fff;font-family:Arial;display:flex;justify-content:center;align-items:center;height:100vh}.box{background:#202c33;padding:25px;border-radius:15px;width:90%;max-width:350px;text-align:center}input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:0;box-sizing:border-box}button{width:100%;padding:12px;background:#00a884;color:#fff;border:0;border-radius:10px;font-size:16px}</style></head><body><div class=box><h2>📱 مجال</h2><input id=user placeholder="اسمك"><input id=room placeholder="كود الغرفة"><button onclick="location.href='/chat?user='+encodeURIComponent(document.getElementById('user').value)+'&room='+encodeURIComponent(document.getElementById('room').value)">دخول</button></div></body></html>'''
+@app.route('/chat')
+def chat():
+    u=request.args.get('user',''); r=request.args.get('room','')
+    return f'''<html dir=rtl><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{{margin:0;background:#111b21;color:#fff;font-family:Arial}}.h{{background:#202c33;padding:12px;display:flex;justify-content:space-between;position:fixed;top:0;width:100%;box-sizing:border-box;z-index:10}}.c{{padding:10px;padding-top:60px;padding-bottom:70px}}.m{{padding:8px 12px;border-radius:10px;margin:6px 0;background:#202c33;max-width:80%}}.b{{position:fixed;bottom:0;width:100%;background:#202c33;padding:8px;display:flex;box-sizing:border-box}}#msg{{flex:1;padding:10px;border-radius:20px;border:0}}button{{background:#00a884;border:0;color:#fff;padding:10px 18px;border-radius:20px;margin-right:5px}}</style></head><body><div class=h><span>{r} - {u}</span><a href=/ style=color:#00a884;text-decoration:none>خروج</a></div><div class=c id=c></div><div class=b><input id=msg placeholder="رسالة..."><button onclick=send()>>></button></div><script>const user="{u}",room="{r}";function load(){{fetch('/msgs?room='+encodeURIComponent(room)).then(r=>r.text()).then(t=>{{document.getElementById('c').innerHTML=t;}})}}function send(){{let v=document.getElementById('msg').value.trim();if(!v)return;fetch('/send?room='+encodeURIComponent(room)+'&user='+encodeURIComponent(user)+'&m='+encodeURIComponent(v));document.getElementById('msg').value='';setTimeout(load,300);}}setInterval(load,2000);load();document.getElementById('msg').addEventListener('keypress',function(e){{if(e.key==='Enter')send();}});</script></body></html>'''
+@app.route('/send')
+def send_msg():
+    r=request.args.get('room',''); u=request.args.get('user',''); m=request.args.get('m','')
+    if r not in rooms: rooms[r]=[]
+    if m: rooms[r].append(f"<div class=m><b>{u}:</b> {m}</div>")
+    return 'ok'
+@app.route('/msgs')
+def msgs():
+    r=request.args.get('room',''); return ''.join(rooms.get(r,[])) or '<p style=text-align:center;color:gray;margin-top:20px>مفيش رسايل لسه.. ابعت اول رسالة</p>'
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',port=10000)

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مجال</title>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<style>
+body{margin:0;background:#111b21;color:#fff;font-family:Arial;display:flex;flex-direction:column;height:100vh}
+#login{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;background:#111b21}
+.box{background:#202c33;padding:25px;border-radius:15px;width:85%;max-width:340px;text-align:center}
+input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:0;box-sizing:border-box}
+button{width:100%;padding:12px;background:#00a884;color:#fff;border:0;border-radius:10px;font-size:16px;cursor:pointer}
+.header{background:#202c33;padding:12px;display:flex;justify-content:space-between;align-items:center}
+.chat{flex:1;overflow-y:auto;padding:10px;padding-bottom:10px}
+.msg{background:#202c33;padding:8px 12px;border-radius:10px;margin:6px 0;max-width:75%;word-break:break-word}
+.msg.me{background:#005c4b;margin-left:auto}
+.bar{background:#202c33;padding:8px;display:flex;gap:5px}
+#msgInput{flex:1;padding:10px;border-radius:20px;border:0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="login">
+<div class="box">
+<h2>📱 مجال</h2>
+<p style="color:#aaa;font-size:14px">دردشة دايمة بدون سيرفر</p>
+<input id="user" placeholder="اسمك">
+<input id="room" placeholder="كود الغرفة - مثلا 123">
+<button onclick="join()">دخول الغرفة</button>
+</div>
+</div>
+<div id="app" class="hidden" style="display:flex;flex-direction:column;height:100vh">
+<div class="header"><span id="roomTitle"></span><a href="" style="color:#00a884;text-decoration:none">خروج</a></div>
+<div id="chat" class="chat"></div>
+<div class="bar"><input id="msgInput" placeholder="اكتب رسالة..."><button onclick="send()" style="width:auto;padding:10px 20px;border-radius:20px">></button></div>
+</div>
+<script>
+let gun = Gun(['https://gun-manhattan.herokuapp.com/gun','https://peer.wall.co/gun']);
+let user, room, roomRef;
+function join(){
+ user=document.getElementById('user').value.trim()||'مجهول';
+ room=document.getElementById('room').value.trim();
+ if(!room){alert('اكتب كود الغرفة');return;}
+ document.getElementById('login').classList.add('hidden');
+ document.getElementById('app').classList.remove('hidden');
+ document.getElementById('roomTitle').innerText='غرفة: '+room+' - '+user;
+ roomRef = gun.get('magal-2026-'+room);
+ roomRef.get('msgs').map().once((data,id)=>{
+  if(!data)return;
+  addMsg(data);
+ });
+}
+function addMsg(d){
+ if(document.getElementById(d.id))return;
+ let div=document.createElement('div');
+ div.id=d.id;
+ div.className='msg'+(d.u===user?' me':'');
+ div.innerHTML='<b>'+d.u+':</b> '+d.t;
+ document.getElementById('chat').appendChild(div);
+ document.getElementById('chat').scrollTop=99999;
+}
+function send(){
+ let t=document.getElementById('msgInput').value.trim();
+ if(!t)return;
+ let id=Date.now()+'-'+Math.random();
+ roomRef.get('msgs').get(id).put({u:user,t:t,id:id,time:Date.now()});
+ document.getElementById('msgInput').value='';
+}
+document.getElementById('msgInput').addEventListener('keypress',e=>{if(e.key==='Enter')send()});
+</script>
+</body>
+  </html>
